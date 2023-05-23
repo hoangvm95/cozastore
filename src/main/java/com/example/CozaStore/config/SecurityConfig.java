@@ -1,24 +1,27 @@
 package com.example.CozaStore.config;
 
-import com.example.CozaStore.service.CustomUserDetailService;
+import com.example.CozaStore.filter.JWTFilter;
+import com.example.CozaStore.provider.CustomAuthenManagerProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration // để springboot quét tới tầng config tạo cấu hình chạy config trước
 @EnableWebSecurity
 public class SecurityConfig  {
+    @Autowired
+    CustomAuthenManagerProvider customAuthenManagerProvider;
+    @Autowired
+    JWTFilter jwtFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder(){
@@ -29,20 +32,19 @@ public class SecurityConfig  {
     // Tạo ra AuthenticationManager để custom lại thông tin chứng thực
     @Bean
     public AuthenticationManager authenticationManager(HttpSecurity httpSecurity) throws Exception {
-        CustomUserDetailService customUserDetailService = new CustomUserDetailService();
         return httpSecurity.getSharedObject(AuthenticationManagerBuilder.class)
-                .userDetailsService(customUserDetailService)
-                .passwordEncoder(passwordEncoder())
-                .and().build();
+                .authenticationProvider(customAuthenManagerProvider).build();
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
         return http.csrf().disable()
-                .authorizeHttpRequests()
-                .antMatchers("/login/**").permitAll()
-                .anyRequest().authenticated()
-                .and().httpBasic().and().build();
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and().authorizeHttpRequests()
+                    .antMatchers("/login/**").permitAll()
+                    .anyRequest().authenticated()
+                .and().addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .build();
     }
 
 }

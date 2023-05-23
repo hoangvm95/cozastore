@@ -4,9 +4,12 @@ import com.example.CozaStore.dto.UserDto;
 import com.example.CozaStore.payload.request.SignUpRequest;
 import com.example.CozaStore.payload.response.BaseResponse;
 import com.example.CozaStore.service.LoginService;
+import com.example.CozaStore.utils.JWTHelperUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -29,15 +32,29 @@ public class LoginController {
     @Autowired
     private LoginService loginService;
 
+    @Autowired
+    JWTHelperUtils jwtHelperUtils;
+
+    @Autowired
+    AuthenticationManager authenticationManager;
+
     @PostMapping("/signin")
     public ResponseEntity<?> signin (@RequestParam String username, @RequestParam String password){
-        boolean isSuccess = loginService.checklogin(username,password);
-
         BaseResponse response = new BaseResponse();
-        response.setMessage(isSuccess ? "Đăng nhập thành công" : "Đăng nhập thất bại");
-        response.setData(isSuccess);
+        try {
+            UsernamePasswordAuthenticationToken user = new UsernamePasswordAuthenticationToken(username,password);
+            authenticationManager.authenticate(user);
 
-        return new ResponseEntity<>(response, HttpStatus.OK);
+            String token = jwtHelperUtils.generateToken(username);
+
+            response.setMessage("Đăng nhập thành công");
+            response.setData(token);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            response.setStatusCode(403);
+            response.setMessage("Đăng nhập thất bại");
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
     }
 
     @PostMapping("/signup")
@@ -49,5 +66,11 @@ public class LoginController {
         response.setData(isSuccess);
 
         return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    @GetMapping("/token")
+    public ResponseEntity<?> index(){
+        String token = jwtHelperUtils.generateToken("vmh123");
+        String data = jwtHelperUtils.validToken(token);
+        return new ResponseEntity<>(data,HttpStatus.OK);
     }
 }
