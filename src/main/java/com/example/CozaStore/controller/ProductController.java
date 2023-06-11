@@ -1,14 +1,23 @@
 package com.example.CozaStore.controller;
 
+import com.example.CozaStore.exception.FileNotFoundException;
 import com.example.CozaStore.payload.request.ProductRequest;
 import com.example.CozaStore.payload.response.BaseResponse;
 import com.example.CozaStore.service.imp.IProductService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.web.ServerProperties;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.nio.file.*;
@@ -17,13 +26,49 @@ import java.util.Base64;
 @RestController
 @RequestMapping("/product")
 public class ProductController {
+    @Value("${root.file.path}")
+    private String rootPath;
+
     @Autowired
     IProductService iProductService;
 
+    Logger log = LoggerFactory.getLogger(ProductController.class);
+
+    @GetMapping("/file/{filename}")
+    public ResponseEntity<?> downloadFileProduct(@PathVariable String filename) {
+        try {
+            // Định nghĩa đường dẫn folder để lưu file
+            Path path = Paths.get(rootPath);
+
+            Path pathFile = path.resolve(filename);
+            Resource resource = new UrlResource(pathFile.toUri());
+            if (resource.exists() || resource.isReadable()){
+            // Cho phép download file
+            return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+                    .body(resource);
+                }else {
+                throw new FileNotFoundException ("Không tìm thấy file");
+//                throw new RuntimeException("Không tìm thấy file");
+                }
+            }catch(Exception e){
+                throw new FileNotFoundException ("Không tìm thấy file");
+        }
+    }
+
     @GetMapping("/{id}")
-    public ResponseEntity<?> getProductByCategoryId(@PathVariable int id){
+    public ResponseEntity<?> getProductByCategoryId(
+            HttpServletRequest request,
+            @PathVariable int id){
+
+        log.trace("trace log");
+        log.debug("debug log");
+        log.info("ìno log");
+        log.warn("warn log");
+        log.error("error log");
+
+        String host = request.getHeader("host");
         BaseResponse response = new BaseResponse();
-        response.setData(iProductService.getProductByCategory(3));
+        response.setData(iProductService.getProductByCategory(host ,3));
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -60,7 +105,7 @@ public class ProductController {
 
         String filename = productRequest.getFile().getOriginalFilename();
         try {
-            String rootFolder = "D:\\IT\\Bootcamp Java 01\\GitHub\\Git_Cozastore\\image";
+            String rootFolder = rootPath;
             Path pathRoot = Paths.get(rootFolder);
             if (!Files.exists(pathRoot)) {
                 Files.createDirectory(pathRoot);
@@ -72,4 +117,6 @@ public class ProductController {
         }
         return new ResponseEntity<>(filename,HttpStatus.OK);
     }
+
+
 }

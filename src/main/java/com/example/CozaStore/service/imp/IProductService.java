@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 public interface IProductService {
-    List<ProductResponse> getProductByCategory(int id);
+    List<ProductResponse> getProductByCategory(String host, int id);
 
     boolean addProduct (ProductRequest productRequest);
 }

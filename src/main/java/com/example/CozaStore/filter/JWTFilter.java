@@ -32,7 +32,7 @@ public class JWTFilter extends OncePerRequestFilter {
                     SecurityContext securityContext = SecurityContextHolder.getContext();
                     securityContext.setAuthentication(authenticationToken);
                 }
-                System.out.println("Kiem tra "+data);
+                System.out.println("Kiem tra "+ data);
             }catch (Exception e){
                 System.out.println("Token không hợp lệ ");
             }
