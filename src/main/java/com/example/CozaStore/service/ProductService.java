@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ProductService implements IProductService {
@@ -33,6 +34,7 @@ public class ProductService implements IProductService {
             productResponse.setImage("http://" + host +"/product/file/" + data.getImage());
             productResponse.setName(data.getName());
             productResponse.setPrice(data.getPrice());
+            productResponse.setId(data.getId());
 
             productResponseList.add(productResponse);
         }
@@ -67,5 +69,24 @@ public class ProductService implements IProductService {
 
             return false;
         }
+    }
+
+    @Override
+    public ProductResponse getDetailProduct(int id) {
+        /**
+         * Optional : Kiểu dữ liệu giúp tránh trường hợp đối tượng bị null hoặc rỗng
+         * isPresent : Kiểm tra đối tượng có dữ liệu hay không
+         */
+        Optional<ProductEntity> product = productRepository.findById(id);
+        ProductResponse productResponse = new ProductResponse();
+        if(product.isPresent()){
+            productResponse.setId(product.get().getId());
+            productResponse.setPrice(product.get().getPrice());
+            productResponse.setImage(product.get().getImage());
+            productResponse.setName(product.get().getName());
+            productResponse.setDesc(product.get().getDescription());
+        }
+
+        return productResponse;
     }
 }

@@ -56,19 +56,22 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
+    public ResponseEntity<?> getDetailProduct(@PathVariable int id){
+
+        BaseResponse baseResponse = new BaseResponse();
+        baseResponse.setData(iProductService.getDetailProduct(id));
+
+        return new ResponseEntity<>(baseResponse,HttpStatus.OK);
+    }
+
+    @GetMapping("category/{id}")
     public ResponseEntity<?> getProductByCategoryId(
             HttpServletRequest request,
             @PathVariable int id){
 
-        log.trace("trace log");
-        log.debug("debug log");
-        log.info("ìno log");
-        log.warn("warn log");
-        log.error("error log");
-
         String host = request.getHeader("host");
         BaseResponse response = new BaseResponse();
-        response.setData(iProductService.getProductByCategory(host ,3));
+        response.setData(iProductService.getProductByCategory(host ,id));
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
