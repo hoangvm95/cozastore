@@ -8,8 +8,8 @@ import javax.persistence.*;
 public class OrderDetailEntity {
     @Column(name="price")
     private String price;
-    @Column(name="quality")
-    private String quality;
+    @Column(name="quantity")
+    private String quantity;
 
     @EmbeddedId
     private OrderDetailId ids;
@@ -30,12 +30,12 @@ public class OrderDetailEntity {
         this.price = price;
     }
 
-    public String getQuality() {
-        return quality;
+    public String getQuantity() {
+        return quantity;
     }
 
-    public void setQuality(String quality) {
-        this.quality = quality;
+    public void setQuantity(String quantity) {
+        this.quantity = quantity;
     }
 
     public OrderDetailId getIds() {
