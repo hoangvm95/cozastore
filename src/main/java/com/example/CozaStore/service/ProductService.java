@@ -10,7 +10,12 @@ import com.example.CozaStore.repository.ProductRepository;
 import com.example.CozaStore.service.imp.IProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.GetMapping;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +30,9 @@ public class ProductService implements IProductService {
     ProductRepository productRepository;
 
     @Override
+    @Cacheable("getProductBycategory")
     public List<ProductResponse> getProductByCategory(String host, int id) {
+        System.out.println("cache ghgfhfgh");
         List<ProductEntity> list = productRepository.findByCategoryId(id);
         List<ProductResponse> productResponseList = new ArrayList<>();
 
@@ -39,6 +46,11 @@ public class ProductService implements IProductService {
             productResponseList.add(productResponse);
         }
         return productResponseList;
+    }
+    @Override
+    @CacheEvict(value = "getProductBycategory", allEntries = true)
+    public boolean clearCache(){
+        return true;
     }
 
     @Override
