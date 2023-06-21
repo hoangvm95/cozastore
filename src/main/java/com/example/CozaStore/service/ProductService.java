@@ -8,15 +8,19 @@ import com.example.CozaStore.payload.request.ProductRequest;
 import com.example.CozaStore.payload.response.ProductResponse;
 import com.example.CozaStore.repository.ProductRepository;
 import com.example.CozaStore.service.imp.IProductService;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -28,30 +32,46 @@ public class ProductService implements IProductService {
 
     @Autowired
     ProductRepository productRepository;
+    @Autowired
+    RedisTemplate redisTemplate;
+    private Gson gson = new Gson();
 
     @Override
-    @Cacheable("getProductBycategory")
+//    @Cacheable("getProductBycategory")
     public List<ProductResponse> getProductByCategory(String host, int id) {
-        System.out.println("cache ghgfhfgh");
-        List<ProductEntity> list = productRepository.findByCategoryId(id);
+        System.out.println("cache test");
         List<ProductResponse> productResponseList = new ArrayList<>();
+        if (redisTemplate.hasKey("ListProduct")) {
+            System.out.println("Redis CÓ dữ liệu");
+            String dataProduct = (String) redisTemplate.opsForValue().get("ListProduct");
+            Type listType = new TypeToken<ArrayList<ProductResponse>>(){}.getType();
+            productResponseList = new Gson().fromJson(dataProduct, listType);
+        } else {
+            System.out.println("Redis KHÔNG CÓ dữ liệu");
+            List<ProductEntity> list = productRepository.findByCategoryId(id);
 
-        for (ProductEntity data : list) {
-            ProductResponse productResponse = new ProductResponse();
-            productResponse.setImage("http://" + host +"/product/file/" + data.getImage());
-            productResponse.setName(data.getName());
-            productResponse.setPrice(data.getPrice());
-            productResponse.setId(data.getId());
+            for (ProductEntity data : list) {
+                ProductResponse productResponse = new ProductResponse();
+                productResponse.setImage("http://" + host + "/product/file/" + data.getImage());
+                productResponse.setName(data.getName());
+                productResponse.setPrice(data.getPrice());
+                productResponse.setId(data.getId());
 
-            productResponseList.add(productResponse);
+                productResponseList.add(productResponse);
+            }
+            String dataProduct = gson.toJson(productResponseList);
+            redisTemplate.opsForValue().set("ListProduct", dataProduct);
         }
+
         return productResponseList;
     }
+
     @Override
     @CacheEvict(value = "getProductBycategory", allEntries = true)
-    public boolean clearCache(){
+    public boolean clearCache() {
         return true;
     }
+
 
     @Override
     public boolean addProduct(ProductRequest productRequest) {
@@ -91,7 +111,7 @@ public class ProductService implements IProductService {
          */
         Optional<ProductEntity> product = productRepository.findById(id);
         ProductResponse productResponse = new ProductResponse();
-        if(product.isPresent()){
+        if (product.isPresent()) {
             productResponse.setId(product.get().getId());
             productResponse.setPrice(product.get().getPrice());
             productResponse.setImage(product.get().getImage());
