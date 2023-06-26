@@ -30,12 +30,12 @@ public class RedisConfig {
 
     @Bean
     @Primary
-    public RedisTemplate<String,Object> template(RedisConnectionFactory connectionFactory){
-        RedisTemplate <String,Object> template = new RedisTemplate<>();
-        template.setConnectionFactory(connectionFactory);
-        template.setKeySerializer(new StringRedisSerializer());
+    public RedisTemplate<String,Object> redisTemplate(RedisConnectionFactory redisConnectionFactory){
+        RedisTemplate <String,Object> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setConnectionFactory(redisConnectionFactory);
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
 
-        return template;
+        return redisTemplate;
     }
 
 }
